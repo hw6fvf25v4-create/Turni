@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0E100F">
+<title>Turni</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E100F; --card:#171A18; --card2:#1D211E; --line:#262B27;
+    --text:#ECEDE9; --dim:#8B9188; --accent:#D9A441; --accent-ink:#161104; --warn:#C96A4A;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--text);
+    font-family:'Inter',-apple-system,'Segoe UI',sans-serif;
+    padding-bottom:96px;
+  }
+  .wrap{max-width:620px; margin:0 auto; padding:28px 14px}
+  header.main{text-align:center; margin-bottom:26px}
+  h1{
+    font-family:'Space Grotesk','Inter',sans-serif; font-size:26px; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase; margin:0;
+  }
+  .sub{font-size:13px; color:var(--dim); margin-top:6px}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px 14px 13px; margin-bottom:10px;
+  }
+  .day-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px}
+  .day-name{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:15.5px; letter-spacing:.04em}
+  .count{font-size:12px; font-weight:600; color:var(--dim)}
+  .count.low{color:var(--warn)}
+  .chips{display:flex; flex-wrap:wrap; gap:6px}
+  .chip{
+    padding:6px 12px; border-radius:999px; font-size:13.5px; font-weight:500;
+    cursor:pointer; user-select:none; border:1px solid var(--line);
+    background:transparent; color:var(--text); transition:all .12s;
+  }
+  .chip.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+  .bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(14,16,15,.92); backdrop-filter:blur(8px);
+    border-top:1px solid var(--line); display:flex; gap:10px; justify-content:center;
+  }
+  .gen-btn{
+    flex:1; max-width:380px; padding:13px 20px; border-radius:12px; border:none;
+    background:var(--accent); color:var(--accent-ink); font-size:15.5px; font-weight:700;
+    letter-spacing:.03em; cursor:pointer; font-family:'Space Grotesk',sans-serif;
+  }
+  .ghost-btn{
+    padding:13px 18px; border-radius:12px; border:1px solid var(--line);
+    background:transparent; color:var(--dim); font-size:14px; font-weight:600; cursor:pointer;
+  }
+  .row{display:flex; align-items:center; gap:10px; padding:7px 2px; border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .num{width:18px; color:var(--dim); font-size:12.5px; text-align:right}
+  select, input{font-family:inherit}
+  .sel{
+    flex:1; padding:7px 8px; border-radius:9px; border:1px solid var(--line);
+    background:var(--card2); color:var(--text); font-size:14px;
+  }
+  .time{font-size:11.5px; color:var(--dim); width:78px; text-align:right; font-variant-numeric:tabular-nums}
+  .x{color:var(--warn); cursor:pointer; font-weight:700; font-size:13px; padding:0 2px}
+  .copy-btn{
+    padding:7px 15px; border-radius:9px; border:1px solid var(--line);
+    background:transparent; color:var(--text); font-size:13px; font-weight:600;
+    cursor:pointer; transition:all .12s;
+  }
+  .copy-btn.done{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+  .warn-box{
+    border:1px solid #4A2E24; background:#211713; color:#D89377;
+    border-radius:10px; padding:8px 12px; font-size:12.5px; margin-bottom:8px;
+  }
+  .settings-link{
+    display:block; text-align:center; color:var(--dim); font-size:12.5px;
+    margin-top:26px; cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+    background:none; border:none; width:100%;
+  }
+  .num-input{
+    width:46px; padding:5px 6px; border-radius:8px; border:1px solid var(--line);
+    background:var(--card2); color:var(--text); font-size:14px; text-align:center;
+  }
+  .set-row{
+    display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center;
+    padding:6px 0; border-bottom:1px solid var(--line); font-size:13.5px;
+  }
+  .set-head{color:var(--dim); font-size:12px}
+  .add-row{display:flex; gap:8px; align-items:center; margin-top:14px; flex-wrap:wrap}
+  button:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  #results{margin-top:30px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="main">
+    <h1>Turni</h1>
+    <div class="sub">Seleziona le disponibilità della settimana</div>
+  </header>
+
+  <div id="days"></div>
+
+  <section id="results" class="hidden">
+    <header class="main" style="margin-bottom:16px">
+      <h1 style="font-size:19px">Colonne nomi</h1>
+      <div class="sub">Copia e incolla nella colonna del foglio</div>
+    </header>
+    <div id="warnings"></div>
+    <div id="result-cards"></div>
+  </section>
+
+  <button class="settings-link" id="settings-toggle">Impostazioni turni</button>
+  <div id="settings" class="card hidden" style="margin-top:14px"></div>
+</div>
+
+<div class="bar">
+  <button class="ghost-btn" id="reset">Azzera</button>
+  <button class="gen-btn" id="generate">Genera turni</button>
+</div>
+
+<script>
+let people = [
+  {name:"Luca", tier:1},
+  {name:"Alex", tier:2}, {name:"Claudio", tier:2}, {name:"Davide", tier:2}, {name:"Pole", tier:2},
+  {name:"Robi", tier:3},
+  {name:"Luca R", tier:4}, {name:"Filippo", tier:4}, {name:"Nicholas", tier:4}, {name:"Fede", tier:4}, {name:"Giovanni", tier:4}, {name:"Zacca", tier:4}, {name:"Pietro", tier:4},
+];
+
+const GIORNI = ["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato","Domenica"];
+let posti = [3,3,3,3,5,7,7];
+let early = [1,1,1,1,2,3,3];
+const preSelected = () => GIORNI.map(() => new Set(people.filter(p => p.tier === 4).map(p => p.name)));
+let avail = preSelected();
+let results = null;
+
+function renderDays(){
+  const el = document.getElementById("days");
+  el.innerHTML = "";
+  GIORNI.forEach((g,d) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    const n = avail[d].size;
+    card.innerHTML = `
+      <div class="day-head">
+        <span class="day-name">${g}</span>
+        <span class="count ${n < posti[d] ? "low" : ""}">${n}/${posti[d]}</span>
+      </div>
+      <div class="chips"></div>`;
+    const chips = card.querySelector(".chips");
+    people.forEach(p => {
+      const c = document.createElement("span");
+      c.className = "chip" + (avail[d].has(p.name) ? " on" : "");
+      c.textContent = p.name;
+      c.onclick = () => {
+        avail[d].has(p.name) ? avail[d].delete(p.name) : avail[d].add(p.name);
+        renderDays();
+      };
+      chips.appendChild(c);
+    });
+    el.appendChild(card);
+  });
+}
+
+function genera(){
+  const total = {}, earlyCount = {};
+  people.forEach(p => { total[p.name]=0; earlyCount[p.name]=0; });
+
+  results = [];
+  const warns = [];
+
+  GIORNI.forEach((g,d) => {
+    const rnd = {};
+    people.forEach(p => rnd[p.name] = Math.random());
+    const candidati = people.filter(p => avail[d].has(p.name));
+    const scelti = [...candidati]
+      .sort((a,b) => a.tier-b.tier || total[a.name]-total[b.name] || rnd[a.name]-rnd[b.name])
+      .slice(0, posti[d]);
+
+    if (candidati.length < posti[d] && posti[d] > 0)
+      warns.push(`${g}: ${candidati.length} disponibili su ${posti[d]} posti`);
+
+    const perEarly = [...scelti].sort((a,b) =>
+      a.tier-b.tier || earlyCount[a.name]-earlyCount[b.name] || total[a.name]-total[b.name] || rnd[a.name]-rnd[b.name]);
+    const earlySet = new Set(perEarly.slice(0, early[d]).map(p => p.name));
+
+    const rows = [
+      ...scelti.filter(p => earlySet.has(p.name)),
+      ...scelti.filter(p => !earlySet.has(p.name)),
+    ].map(p => ({name:p.name, early:earlySet.has(p.name)}));
+
+    rows.forEach(r => { total[r.name]++; if(r.early) earlyCount[r.name]++; });
+    results.push(rows);
+  });
+
+  renderResults(warns);
+}
+
+function renderResults(warns){
+  const sec = document.getElementById("results");
+  sec.classList.remove("hidden");
+  document.getElementById("warnings").innerHTML =
+    (warns||[]).map(w => `<div class="warn-box">${w}</div>`).join("");
+
+  const el = document.getElementById("result-cards");
+  el.innerHTML = "";
+  results.forEach((rows,d) => {
+    if(!rows.length) return;
+    const card = document.createElement("div");
+    card.className = "card";
+    const head = document.createElement("div");
+    head.className = "day-head";
+    head.innerHTML = `<span class="day-name">${GIORNI[d]}</span>`;
+    const btn = document.createElement("button");
+    btn.className = "copy-btn";
+    btn.textContent = "Copia";
+    btn.onclick = () => copia(rows, btn);
+    head.appendChild(btn);
+    card.appendChild(head);
+
+    rows.forEach((r,i) => {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = `<span class="num">${i+1}</span>`;
+      const sel = document.createElement("select");
+      sel.className = "sel";
+      people.forEach(p => {
+        const o = document.createElement("option");
+        o.value = p.name; o.textContent = p.name;
+        if(p.name === r.name) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.onchange = e => { r.name = e.target.value; };
+      row.appendChild(sel);
+      const t = document.createElement("span");
+      t.className = "time";
+      t.textContent = r.early ? "18.00–21.00" : "18.30–21.30";
+      row.appendChild(t);
+      const x = document.createElement("span");
+      x.className = "x"; x.textContent = "✕";
+      x.onclick = () => { rows.splice(i,1); renderResults(warns); };
+      row.appendChild(x);
+      card.appendChild(row);
+    });
+    el.appendChild(card);
+  });
+  sec.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+async function copia(rows, btn){
+  const text = rows.map(r => r.name.toUpperCase()).join("\n");
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+  }
+  btn.textContent = "Copiato"; btn.classList.add("done");
+  setTimeout(() => { btn.textContent = "Copia"; btn.classList.remove("done"); }, 1500);
+}
+
+function renderSettings(){
+  const el = document.getElementById("settings");
+  el.innerHTML = `<div class="set-row set-head"><span>Giorno</span><span>Posti</span><span>18.00</span></div>`;
+  GIORNI.forEach((g,d) => {
+    const row = document.createElement("div");
+    row.className = "set-row";
+    row.innerHTML = `<span>${g}</span>`;
+    const p = document.createElement("input");
+    p.type = "number"; p.min = 0; p.max = 15; p.value = posti[d]; p.className = "num-input";
+    p.onchange = e => { posti[d] = Math.max(0, +e.target.value||0); renderDays(); };
+    const e2 = document.createElement("input");
+    e2.type = "number"; e2.min = 0; e2.max = 15; e2.value = early[d]; e2.className = "num-input";
+    e2.onchange = ev => { early[d] = Math.max(0, +ev.target.value||0); };
+    row.appendChild(p); row.appendChild(e2);
+    el.appendChild(row);
+  });
+  const add = document.createElement("div");
+  add.className = "add-row";
+  add.innerHTML = `
+    <input class="num-input" style="width:130px;text-align:left" placeholder="Nuovo nome" id="new-name">
+    <select class="sel" style="flex:0 0 auto" id="new-tier">
+      <option value="1">Livello 1</option><option value="2">Livello 2</option>
+      <option value="3">Livello 3</option><option value="4" selected>Livello 4</option>
+    </select>
+    <button class="copy-btn" id="add-person">Aggiungi</button>`;
+  el.appendChild(add);
+  add.querySelector("#add-person").onclick = () => {
+    const n = add.querySelector("#new-name").value.trim();
+    const t = +add.querySelector("#new-tier").value;
+    if(!n || people.some(p => p.name.toLowerCase() === n.toLowerCase())) return;
+    people.push({name:n, tier:t});
+    people.sort((a,b) => a.tier-b.tier);
+    add.querySelector("#new-name").value = "";
+    renderDays(); renderSettings();
+  };
+}
+
+document.getElementById("generate").onclick = genera;
+document.getElementById("reset").onclick = () => {
+  avail = preSelected();
+  results = null;
+  document.getElementById("results").classList.add("hidden");
+  renderDays();
+  window.scrollTo({top:0, behavior:"smooth"});
+};
+document.getElementById("settings-toggle").onclick = function(){
+  const s = document.getElementById("settings");
+  s.classList.toggle("hidden");
+  this.textContent = s.classList.contains("hidden") ? "Impostazioni turni" : "Nascondi impostazioni";
+  if(!s.classList.contains("hidden")) renderSettings();
+};
+
+renderDays();
+</script>
+</body>
+</html>
